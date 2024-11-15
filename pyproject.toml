@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "src"
+version = "0.1.0"
+description = ""
+authors = ["Doug <douglazenby@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "~3.11"
+black = "^24.10.0"
+ruff = "^0.6.9"
+pytest = "^8.3.3"
+pre-commit = "^4.0.1"
+numpy = ">=1.22,<2.1"
+pandas = "^2.2.3"
+scikit-learn = "^1.5.2"
+matplotlib = "^3.9.2"
+jupyter = "^1.1.1"
+pyarrow = "^17.0.0"
+requests = "^2.32.3"
+python-dotenv = "^1.0.1"
+geopandas = "^1.0.1"
+geoplot = "^0.5.1"
+tqdm = "^4.67.0"
+plotly-express = "^0.4.1"
+skforecast = "^0.14.0"
+holidays = "^0.60"
+lightgbm = "^4.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
