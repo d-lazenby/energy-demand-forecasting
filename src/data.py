@@ -1,10 +1,13 @@
 import calendar
+import holidays
 from datetime import datetime
 from dotenv import load_dotenv
 import os
 
 import requests
 import pandas as pd
+
+from typing import Tuple
 
 from src.paths import PARENT_DIR, RAW_DATA_DIR, TRANSFORMED_DATA_DIR
 
@@ -64,7 +67,7 @@ def download_raw_data(year: int, month: int):
 def prepare_raw_data_for_training():
     """
     Concatentates all raw data and prepares it for training. 
-    Missing values filled with -1 for now. 
+    Missing values forward-filled with previous days' demand. 
     """
     concat_demand = pd.DataFrame(columns=["datetime", "ba_code", "demand"])
 
@@ -94,8 +97,8 @@ def prepare_raw_data_for_training():
     data.columns.name = None
     data.columns = [f"ba_{ba_code}" for ba_code in data.columns]
 
-    # Filling missing values with -1 for now
-    data = data.fillna(-1)
+    # Forward fill NaNs with previous days demand
+    data = data.ffill()
 
     data = data.sort_index()
 
@@ -103,3 +106,68 @@ def prepare_raw_data_for_training():
         TRANSFORMED_DATA_DIR
         / f"ts_tabular_{min_year}_{min_month}_to_{max_year}_{max_month}.csv"
     )
+
+def load_training_data() -> pd.DataFrame:
+    """
+    Loads data from CSV and prepares for training. 
+    """
+    
+    data = pd.read_csv(TRANSFORMED_DATA_DIR / "ts_tabular_2022_10_to_2024_10.csv")
+    # Wrangling index for deriving exog features
+    data["datetime"] = pd.to_datetime(data["datetime"])
+    data = data.set_index("datetime")
+    # Explicitly set freqency of index
+    data = data.asfreq("1D")
+    
+    return data
+
+def make_exog_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adds columns to indicate holidays, month, day of week, weekend and season.
+    
+    Args:
+        df: dataframe containing the time-series data. 
+        
+    Returns:
+        Modified dataframe with additional columns of exogenous features.
+    """
+    data = df.copy()
+    
+    us_holidays = holidays.US(years=[2022, 2023, 2024])
+    data["exog_is_holiday"] = data.index.map(lambda day: day in us_holidays).astype(int)
+
+    data["exog_month"] = data.index.month
+    data["exog_day_of_week"] = data.index.dayofweek
+    data["exog_is_weekend"] = data["exog_day_of_week"].isin([5, 6]).astype(int)
+
+    # Winter = 12, 1, 2; Spring = 3, 4, 5; ...
+    data["exog_season"] = ((data["exog_month"] % 12) // 3) + 1
+
+    return data
+
+
+def split_data(
+    df: pd.DataFrame, end_train: str = "2023-10-31 23:59:00"
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Splits the data into training and testing sets, taking all rows before {end_train} as
+    training data and all rows after as testing data.
+
+    Args:
+        df: dataframe containing the time-series data.
+        end_train: string containing the cutoff date. Should be in format, e.g., '2023-10-31 23:59:00' to avoid 
+            rows appearing in both train and test sets.
+    
+    Returns:
+        (data_train, data_test)
+    """
+
+    data = df.copy()
+
+    data_train = data.loc[:end_train, :].copy()
+    data_test = data.loc[end_train:, :].copy()
+
+    print(f"{data_train.shape=}")
+    print(f"{data_test.shape=}")
+
+    return data_train, data_test
