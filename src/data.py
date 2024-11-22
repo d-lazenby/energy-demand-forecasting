@@ -169,5 +169,14 @@ def split_data(
 
     print(f"{data_train.shape=}")
     print(f"{data_test.shape=}")
+    
+    print(
+        f"Train dates : {data_train.index.min()} --- {data_train.index.max()}   "
+        f"(n={len(data_train)})"
+    )
+    print(
+        f"Test dates  : {data_test.index.min()} --- {data_test.index.max()}   "
+        f"(n={len(data_test)})"
+    )
 
     return data_train, data_test
