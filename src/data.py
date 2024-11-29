@@ -107,6 +107,12 @@ def prepare_raw_data_for_training():
         / f"ts_tabular_{min_year}_{min_month}_to_{max_year}_{max_month}.csv"
     )
 
+    print(
+        f"Data transformed and saved at",
+        TRANSFORMED_DATA_DIR
+        / f"ts_tabular_{min_year}_{min_month}_to_{max_year}_{max_month}.csv",
+    )
+
 def load_training_data() -> pd.DataFrame:
     """
     Loads data from CSV and prepares for training. 
