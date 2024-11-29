@@ -6,6 +6,7 @@ import os
 
 import requests
 import pandas as pd
+from tqdm import tqdm
 
 from typing import Tuple
 
@@ -63,6 +64,90 @@ def download_raw_data(year: int, month: int):
         print(
             f"Data for {year}_{month} successfully downloaded to demand_{year}_{month}.csv"
         )
+
+
+def fill_missing_demand_values(raw_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ensures that all BAs have demand values for the full range of dates.
+    Adds in entries for any missing dates and fills these with demand = -1.
+
+    Args:
+        raw_df: dataframe of concatenated demand for all BAs
+
+    Returns:
+        dataframe with extended date range and filled values
+    """
+    ba_codes = raw_df["ba_code"].unique()
+    # Make a full range of datetime indexes.
+    full_range = pd.date_range(
+        raw_df["datetime"].min(), raw_df["datetime"].max(), freq="D"
+    )
+    # For storing the modified time series
+    output = pd.DataFrame()
+
+    for ba_code in tqdm(ba_codes):
+
+        # Temporary df holding demand with current ba code
+        tmp = raw_df.loc[raw_df["ba_code"] == ba_code, ["datetime", "demand"]]
+
+        tmp.set_index("datetime", inplace=True)
+        tmp.index = pd.DatetimeIndex(tmp.index)
+        # Fill missing values with -1 for the moment for flexibility in modelling stage
+        tmp = tmp.reindex(full_range, fill_value=-1)
+
+        # Add back in the location id
+        tmp["ba_code"] = ba_code
+
+        output = pd.concat([output, tmp])
+
+    # Move demand date from index to column
+    output = output.reset_index().rename(columns={"index": "datetime"})
+
+    return output
+
+
+def prepare_raw_data_for_feature_store() -> pd.DataFrame:
+    """
+    Prepares raw data for feature store by concatenating raw data and inserting
+    missing demand values with -1. Saves modified dataset to CSV.
+    """
+    concat_demand = pd.DataFrame(columns=["datetime", "ba_code", "demand"])
+
+    for file_path in RAW_DATA_DIR.glob("*.csv"):
+        with open(file_path, "rb"):
+            tmp = pd.read_csv(file_path)
+            concat_demand = pd.concat([concat_demand, tmp])
+
+    # To deal with downcasting when filling NaNs
+    concat_demand["demand"] = concat_demand["demand"].astype(int)
+
+    output = fill_missing_demand_values(concat_demand)
+
+    # For annotating the file name
+    min_month, min_year = (
+        output["datetime"].min().month,
+        output["datetime"].min().year,
+    )
+
+    max_month, max_year = (
+        output["datetime"].max().month,
+        output["datetime"].max().year,
+    )
+
+    output.to_csv(
+        TRANSFORMED_DATA_DIR
+        / f"ts_tabular_{min_year}_{min_month}_to_{max_year}_{max_month}.csv",
+        index=False,
+    )
+
+    print(
+        f"Data transformed and saved at",
+        TRANSFORMED_DATA_DIR
+        / f"ts_tabular_{min_year}_{min_month}_to_{max_year}_{max_month}.csv",
+    )
+
+    return output
+
 
 def prepare_raw_data_for_training():
     """
