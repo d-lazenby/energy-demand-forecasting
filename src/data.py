@@ -113,12 +113,12 @@ def prepare_raw_data_for_training():
         / f"ts_tabular_{min_year}_{min_month}_to_{max_year}_{max_month}.csv",
     )
 
-def load_training_data() -> pd.DataFrame:
+def load_training_data(file_name: str) -> pd.DataFrame:
     """
     Loads data from CSV and prepares for training. 
     """
     
-    data = pd.read_csv(TRANSFORMED_DATA_DIR / "ts_tabular_2022_10_to_2024_10.csv")
+    data = pd.read_csv(TRANSFORMED_DATA_DIR / file_name)
     # Wrangling index for deriving exog features
     data["datetime"] = pd.to_datetime(data["datetime"])
     data = data.set_index("datetime")
