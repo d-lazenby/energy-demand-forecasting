@@ -16,9 +16,59 @@ load_dotenv(PARENT_DIR / ".env")
 EIA_API_KEY = os.environ["EIA_API_KEY"]
 
 
-def download_raw_data(year: int, month: int):
+def download_new_batch_of_data(year: int, month: int) -> pd.DataFrame:
     """
     Downloads one month of raw data from EIA for {year}, {month}.
+
+    Args:
+        year: Year of data collection
+        month: Month of data collection
+
+    Returns:
+        Dataframe of raw data
+    """
+
+    # Need the number of days in the current (year, month)
+    _, num_days = calendar.monthrange(year, month)
+
+    URL = (
+        "https://api.eia.gov/v2/electricity/rto/daily-region-data/data/"
+        "?frequency=daily"
+        "&data[0]=value"
+        "&facets[timezone][]=Eastern"
+        "&facets[type][]=D"
+        f"&start={year}-{month:02d}-01"
+        f"&end={year}-{month:02d}-{num_days}"
+        "&sort[0][column]=period"
+        "&sort[0][direction]=desc"
+        "&offset=0"
+        "&length=5000"
+        f"&api_key={EIA_API_KEY}"
+    )
+
+    response = requests.get(url=URL).json()["response"]["data"]
+    data = pd.DataFrame(response)
+
+    # Tidies dataframe
+    data = data[["period", "respondent", "value"]].copy()
+    data.rename(
+        columns={
+            "period": "datetime",
+            "value": "demand",
+            "respondent": "ba_code",
+        },
+        inplace=True,
+    )
+
+    data["datetime"] = pd.to_datetime(data["datetime"]).dt.date
+
+    return data
+
+
+def download_and_save_raw_data(year: int, month: int):
+    """
+    Downloads one month of raw data from EIA for {year}, {month}
+    and saves to CSV.
     
     Args:
         year: Year of data collection
@@ -28,38 +78,8 @@ def download_raw_data(year: int, month: int):
     if file_path.exists():
         print(f"File demand_{year}_{month}.csv exists locally already, try next URL")
     else:
-        # Need the number of days in the current (year, month)
-        _, num_days = calendar.monthrange(year, month)
-
-        URL = (
-            "https://api.eia.gov/v2/electricity/rto/daily-region-data/data/"
-            "?frequency=daily"
-            "&data[0]=value"
-            "&facets[timezone][]=Eastern"
-            "&facets[type][]=D"
-            f"&start={year}-{month:02d}-01"
-            f"&end={year}-{month:02d}-{num_days}"
-            "&sort[0][column]=period"
-            "&sort[0][direction]=desc"
-            "&offset=0"
-            "&length=5000"
-            f"&api_key={EIA_API_KEY}"
-        )
-
-        response = requests.get(url=URL).json()["response"]["data"]
-        data = pd.DataFrame(response)
-
-        # Tidies dataframe and saves to csv
-        data = data[["period", "respondent", "value"]].copy()
-        data.rename(
-            columns={
-                "period": "datetime",
-                "value": "demand",
-                "respondent": "ba_code",
-            },
-            inplace=True,
-        )
-
+        data = download_new_batch_of_data(year=year, month=month)
+        
         data.to_csv(file_path, index=False)
         print(
             f"Data for {year}_{month} successfully downloaded to demand_{year}_{month}.csv"
