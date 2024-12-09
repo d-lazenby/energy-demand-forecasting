@@ -49,7 +49,7 @@ def download_new_batch_of_data(year: int, month: int) -> pd.DataFrame:
     response = requests.get(url=URL).json()["response"]["data"]
     data = pd.DataFrame(response)
 
-    # Tidies dataframe
+    # Tidies dataframe and saves to csv
     data = data[["period", "respondent", "value"]].copy()
     data.rename(
         columns={
@@ -167,6 +167,39 @@ def prepare_raw_data_for_feature_store() -> pd.DataFrame:
     )
 
     return output
+
+
+def fetch_batch_raw_data(from_date: datetime, to_date: datetime) -> pd.DataFrame:
+    """
+    Downloads raw data between {from_date} and {to_date}.
+
+    Args:
+        from_date: date that we want the data to range from
+        to_date: date that we want the data to range to
+
+    Returns:
+        Dataframe of demand
+    """
+    # Download full month
+    from_batch = download_new_batch_of_data(from_date.year, from_date.month)
+    # Filter out unwanted rows
+    from_batch = from_batch[from_batch["datetime"] >= from_date]
+
+    # Download full month
+    to_batch = download_new_batch_of_data(to_date.year, to_date.month)
+    # Filter out unwanted rows
+    to_batch = to_batch[to_batch["datetime"] < to_date]
+
+    data = pd.concat([from_batch, to_batch])
+
+    # To deal with downcasting when filling NaNs
+    data["demand"] = data["demand"].astype(int)
+
+    data = fill_missing_demand_values(data)
+
+    data.sort_values(by=["ba_code", "datetime"], inplace=True)
+
+    return data
 
 
 def prepare_raw_data_for_training():
