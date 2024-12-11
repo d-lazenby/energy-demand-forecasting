@@ -4,7 +4,7 @@ on:
   schedule:
    # run daily at midnight (UTC).
    - cron: '0 0 * * *'
-
+  workflow_dispatch:
 jobs:
 
   feature_pipeline:
@@ -22,9 +22,14 @@ jobs:
     - name: Install Poetry
       uses: snok/install-poetry@v1
 
-    - name: Install Dependencies
-      run: poetry install
-      if: steps.cache.outputs.cache-hit != 'true'
+    - name: Install hsfs
+      run: poetry add "hsfs[python]"
+    
+    - name: Install hopsworks
+      run: poetry add hopsworks
+
+    - name: Verify Installed Dependencies
+      run: poetry show
 
     - name: Execute python workflows from bash script
       env:
