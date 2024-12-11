@@ -5,6 +5,7 @@ on:
    # run daily at midnight (UTC).
    - cron: '0 0 * * *'
   workflow_dispatch:
+
 jobs:
 
   feature_pipeline:
@@ -27,12 +28,25 @@ jobs:
     
     - name: Install hopsworks
       run: poetry add hopsworks
-
+    
+    # Debugging
     - name: Verify Installed Dependencies
       run: poetry show
 
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+
+    # Debugging
+    - name: List Repository Structure
+      run: ls -R
+
+    # Debugging
+    - name: Check PYTHONPATH
+      run: echo $PYTHONPATH
+
     - name: Execute python workflows from bash script
+      working-directory: notebooks
       env:
         HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
         EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
-      run: poetry run jupyter nbconvert --to notebook --execute notebooks/08_feature_pipeline.ipynb
+      run: poetry run jupyter nbconvert --to notebook --execute 08_feature_pipeline.ipynb
