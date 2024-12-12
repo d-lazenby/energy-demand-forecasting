@@ -202,6 +202,41 @@ def fetch_batch_raw_data(from_date: datetime, to_date: datetime) -> pd.DataFrame
     return data
 
 
+def prepare_feature_store_data_for_training(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prepares feature store data for training with SKForecast. Target series are
+    moved to individual columns and the timestamp is set as the index.
+
+    Args:
+        data: dataframe from Hopsworks feature store
+
+    Returns:
+        pd.DataFrame
+    """
+
+    from src.config import BAS
+
+    # Filter out unwanted BAs
+    data = data[data["ba_code"].isin(BAS)].copy()
+
+    data["datetime"] = pd.to_datetime(data["datetime"]).dt.date
+    data = data.set_index("datetime")
+
+    data = pd.pivot_table(
+        data=data, values="demand", index="datetime", columns="ba_code"
+    )
+    # Resetting column names
+    data.columns.name = None
+    data.columns = [f"ba_{ba_code}" for ba_code in data.columns]
+
+    # Explicitly set frequency of index
+    data = data.asfreq("1D")
+
+    data = data.sort_index()
+
+    return data
+
+
 def prepare_raw_data_for_training():
     """
     Concatentates all raw data and prepares it for training. 
@@ -291,8 +326,9 @@ def make_exog_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def split_data(
-    df: pd.DataFrame, end_train: str = "2023-10-31 23:59:00"
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    df: pd.DataFrame, 
+    end_train: str = "2023-10-31 23:59:00"
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Splits the data into training and testing sets, taking all rows before {end_train} as
     training data and all rows after as testing data.
