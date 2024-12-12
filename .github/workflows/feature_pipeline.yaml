@@ -34,7 +34,7 @@ jobs:
 
     - name: Re-install hsfs
       run: poetry add "hsfs[python]"
-    
+
     - name: Re-install hopsworks
       run: poetry add hopsworks
 
