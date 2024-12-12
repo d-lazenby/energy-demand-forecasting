@@ -28,6 +28,20 @@ jobs:
     
     - name: Install hopsworks
       run: poetry add hopsworks
+
+    - name: Remove hopsworks and hsfs
+      run: poetry remove hsfs hopsworks
+
+    - name: Re-install hsfs
+      run: poetry add "hsfs[python]"
+    
+    - name: Re-install hopsworks
+      run: poetry add hopsworks
+
+    - name: Refresh dependencies
+    - run: |
+        poetry lock --no-update
+        poetry install
     
     # Debugging
     - name: Verify Installed Dependencies
