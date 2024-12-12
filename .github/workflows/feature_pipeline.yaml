@@ -39,10 +39,8 @@ jobs:
       run: poetry add hopsworks
 
     - name: Refresh dependencies
-    - run: |
-        poetry lock --no-update
-        poetry install
-    
+    - run: poetry lock --no-update && poetry install
+
     # Debugging
     - name: Verify Installed Dependencies
       run: poetry show
