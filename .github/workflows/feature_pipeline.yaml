@@ -33,7 +33,7 @@ jobs:
       run: poetry add hopsworks
   
     - name: refresh dependencies
-      run: poetry lock --no-update && poetry install
+      run: poetry lock && poetry install
 
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
