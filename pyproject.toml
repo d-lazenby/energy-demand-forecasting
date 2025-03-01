@@ -24,7 +24,7 @@ geoplot = "^0.5.1"
 tqdm = "^4.67.0"
 plotly-express = "^0.4.1"
 skforecast = "^0.14.0"
-holidays = "^0.60"
+holidays = "0.60"
 lightgbm = "^4.5.0"
 hsfs = {extras = ["python"], version = "^3.7.9"}
 hopsworks = "^4.1.2"
