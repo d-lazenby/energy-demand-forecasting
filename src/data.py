@@ -1,6 +1,6 @@
 import calendar
 import holidays
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 
@@ -18,7 +18,9 @@ EIA_API_KEY = os.environ["EIA_API_KEY"]
 
 def download_new_batch_of_data(year: int, month: int) -> pd.DataFrame:
     """
-    Downloads one month of raw data from EIA for {year}, {month}.
+    Downloads one batch of raw data from EIA for {year}, {month}. Note that 
+    length of dataset will vary depending on how far through {month} the user
+    is when they call the function.
 
     Args:
         year: Year of data collection
@@ -31,13 +33,17 @@ def download_new_batch_of_data(year: int, month: int) -> pd.DataFrame:
     # Need the number of days in the current (year, month)
     _, num_days = calendar.monthrange(year, month)
 
+    # To ensure we don't return an empty response
+    from_date = datetime(year, month, 1).date() - timedelta(days=30)
+    from_year, from_month = from_date.year, from_date.month
+
     URL = (
         "https://api.eia.gov/v2/electricity/rto/daily-region-data/data/"
         "?frequency=daily"
         "&data[0]=value"
         "&facets[timezone][]=Eastern"
         "&facets[type][]=D"
-        f"&start={year}-{month:02d}-01"
+        f"&start={from_year}-{from_month:02d}-01"
         f"&end={year}-{month:02d}-{num_days}"
         "&sort[0][column]=period"
         "&sort[0][direction]=desc"
