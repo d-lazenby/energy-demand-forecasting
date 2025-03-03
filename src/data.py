@@ -66,7 +66,7 @@ def download_new_batch_of_data(year: int, month: int) -> pd.DataFrame:
         inplace=True,
     )
 
-    data["datetime"] = pd.to_datetime(data["datetime"]).dt.date
+    data["datetime"] = pd.to_datetime(data["datetime"])
 
     return data
 
@@ -189,14 +189,15 @@ def fetch_batch_raw_data(from_date: datetime, to_date: datetime) -> pd.DataFrame
     # Download full month
     from_batch = download_new_batch_of_data(from_date.year, from_date.month)
     # Filter out unwanted rows
-    from_batch = from_batch[from_batch["datetime"] >= from_date]
+    from_batch = from_batch[from_batch["datetime"] >= pd.Timestamp(from_date)]
 
     # Download full month
     to_batch = download_new_batch_of_data(to_date.year, to_date.month)
     # Filter out unwanted rows
-    to_batch = to_batch[to_batch["datetime"] < to_date]
+    to_batch = to_batch[to_batch["datetime"] < pd.Timestamp(to_date)]
 
     data = pd.concat([from_batch, to_batch])
+    data.drop_duplicates(inplace=True)
 
     # To deal with downcasting when filling NaNs
     data["demand"] = data["demand"].astype(int)
