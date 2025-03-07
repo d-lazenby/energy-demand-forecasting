@@ -85,7 +85,7 @@ def download_and_save_raw_data(year: int, month: int):
         print(f"File demand_{year}_{month}.csv exists locally already, try next URL")
     else:
         data = download_new_batch_of_data(year=year, month=month)
-        
+
         data.to_csv(file_path, index=False)
         print(
             f"Data for {year}_{month} successfully downloaded to demand_{year}_{month}.csv"
@@ -101,13 +101,16 @@ def fill_missing_demand_values(raw_df: pd.DataFrame) -> pd.DataFrame:
         raw_df: dataframe of concatenated demand for all BAs
 
     Returns:
-        dataframe with extended date range and filled values
+        extended dataframe
     """
     ba_codes = raw_df["ba_code"].unique()
+    raw_df["datetime"] = pd.to_datetime(raw_df["datetime"])
+
     # Make a full range of datetime indexes.
     full_range = pd.date_range(
         raw_df["datetime"].min(), raw_df["datetime"].max(), freq="D"
     )
+
     # For storing the modified time series
     output = pd.DataFrame()
 
@@ -115,9 +118,10 @@ def fill_missing_demand_values(raw_df: pd.DataFrame) -> pd.DataFrame:
 
         # Temporary df holding demand with current ba code
         tmp = raw_df.loc[raw_df["ba_code"] == ba_code, ["datetime", "demand"]]
-
         tmp.set_index("datetime", inplace=True)
+        tmp = tmp[~tmp.index.duplicated(keep="first")]
         tmp.index = pd.DatetimeIndex(tmp.index)
+
         # Fill missing values with -1 for the moment for flexibility in modelling stage
         tmp = tmp.reindex(full_range, fill_value=-1)
 
@@ -146,6 +150,7 @@ def prepare_raw_data_for_feature_store() -> pd.DataFrame:
 
     # To deal with downcasting when filling NaNs
     concat_demand["demand"] = concat_demand["demand"].astype(int)
+    concat_demand["datetime"] = pd.to_datetime(concat_demand["datetime"])
 
     output = fill_missing_demand_values(concat_demand)
 
