@@ -10,6 +10,8 @@ from tqdm import tqdm
 
 from typing import Tuple
 
+from sklearn.pipeline import Pipeline
+
 from src.paths import PARENT_DIR, RAW_DATA_DIR, TRANSFORMED_DATA_DIR
 
 load_dotenv(PARENT_DIR / ".env")
@@ -323,7 +325,7 @@ def make_exog_features(df: pd.DataFrame) -> pd.DataFrame:
         Modified dataframe with additional columns of exogenous features.
     """
     data = df.copy()
-    
+
     us_holidays = holidays.US(years=[2022, 2023, 2024])
     data["exog_is_holiday"] = data.index.map(lambda day: day in us_holidays).astype(int)
 
@@ -338,37 +340,86 @@ def make_exog_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def split_data(
-    df: pd.DataFrame, 
-    end_train: str = "2023-10-31 23:59:00"
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    df: pd.DataFrame, train_end: str, days_of_historic_data: int
+) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     """
-    Splits the data into training and testing sets, taking all rows before {end_train} as
-    training data and all rows after as testing data.
+    Splits data into training and test sets. Training set is from the earliest date
+    in {df} to {train_end}. The test set is from {days_of_historic data} days before {train_end}
+    to the latest date in {df}.
 
     Args:
-        df: dataframe containing the time-series data.
-        end_train: string containing the cutoff date. Should be in format, e.g., '2023-10-31 23:59:00' to avoid 
-            rows appearing in both train and test sets.
-    
+        df: The data to split
+        train_end: The date at which the data is split
+        days_of_historic_data: The number of days before {train_end} that are required to make
+            predictions on the test set
+
     Returns:
-        (data_train, data_test)
+        Tuple containing targets and features for the training and test sets
     """
 
     data = df.copy()
 
-    data_train = data.loc[:end_train, :].copy()
-    data_test = data.loc[end_train:, :].copy()
+    train_end = pd.Timestamp(train_end)
 
-    print(f"{data_train.shape=}")
-    print(f"{data_test.shape=}")
-    
-    print(
-        f"Train dates : {data_train.index.min()} --- {data_train.index.max()}   "
-        f"(n={len(data_train)})"
-    )
-    print(
-        f"Test dates  : {data_test.index.min()} --- {data_test.index.max()}   "
-        f"(n={len(data_test)})"
-    )
+    X_train = data.loc[data["datetime"] < train_end]
+    X_test = data.loc[
+        data["datetime"] >= train_end - pd.offsets.Day(days_of_historic_data)
+    ]
 
-    return data_train, data_test
+    y_train = data.loc[data["datetime"] < train_end]["demand"]
+    y_test = data.loc[
+        data["datetime"] >= train_end - pd.offsets.Day(days_of_historic_data)
+    ]["demand"]
+
+    print(f"Data successfully split at {train_end.date()}:")
+    print(
+        f"\t{X_train.shape=}: {X_train['datetime'].min().strftime('%Y-%m-%d')} --- {X_train['datetime'].max().strftime('%Y-%m-%d')}"
+    )
+    print(f"\t{y_train.shape=}")
+    print(
+        f"\t{X_test.shape=}: {X_test['datetime'].min().strftime('%Y-%m-%d')} --- {X_test['datetime'].max().strftime('%Y-%m-%d')}"
+    )
+    print(f"\t{y_test.shape=}")
+
+    return X_train, y_train, X_test, y_test
+
+
+def transform_training_data(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    preprocessing_pipeline: Pipeline,
+) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
+    """
+    Applies {preprocessing_pipeline} of transformations to the train and test sets for training and
+    validation.
+
+    Args:
+        X_train: Training features
+        y_train: Training target
+        X_test: Test features
+        y_test: Test target
+
+    Returns:
+        Tuple containing transformed targets and features for the train and test sets.
+    """
+
+    # Fit and transform train set
+    X_train_t = preprocessing_pipeline.fit_transform(X_train)
+    # Align indexes
+    y_train_t = y_train.loc[X_train_t.index]
+
+    # Transform test set
+    X_test_t = preprocessing_pipeline.transform(X_test)
+    # Align indexes
+    y_test_t = y_test.loc[X_test_t.index]
+
+    assert all(
+        y_train_t.index == X_train_t.index
+    ), "Indexes of target don't match features in training set"
+    assert all(
+        y_test_t.index == X_test_t.index
+    ), "Indexes of target don't match features in testing set"
+
+    return X_train_t, y_train_t, X_test_t, y_test_t
