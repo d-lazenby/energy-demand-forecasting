@@ -300,44 +300,6 @@ def prepare_raw_data_for_training():
         / f"ts_tabular_{min_year}_{min_month}_to_{max_year}_{max_month}.csv",
     )
 
-def load_training_data(file_name: str) -> pd.DataFrame:
-    """
-    Loads data from CSV and prepares for training. 
-    """
-    
-    data = pd.read_csv(TRANSFORMED_DATA_DIR / file_name)
-    # Wrangling index for deriving exog features
-    data["datetime"] = pd.to_datetime(data["datetime"])
-    data = data.set_index("datetime")
-    # Explicitly set freqency of index
-    data = data.asfreq("1D")
-    
-    return data
-
-def make_exog_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Adds columns to indicate holidays, month, day of week, weekend and season.
-    
-    Args:
-        df: dataframe containing the time-series data. 
-        
-    Returns:
-        Modified dataframe with additional columns of exogenous features.
-    """
-    data = df.copy()
-
-    us_holidays = holidays.US(years=[2022, 2023, 2024])
-    data["exog_is_holiday"] = data.index.map(lambda day: day in us_holidays).astype(int)
-
-    data["exog_month"] = data.index.month
-    data["exog_day_of_week"] = data.index.dayofweek
-    data["exog_is_weekend"] = data["exog_day_of_week"].isin([5, 6]).astype(int)
-
-    # Winter = 12, 1, 2; Spring = 3, 4, 5; ...
-    data["exog_season"] = ((data["exog_month"] % 12) // 3) + 1
-
-    return data
-
 
 def split_data(
     df: pd.DataFrame, train_end: str, days_of_historic_data: int
