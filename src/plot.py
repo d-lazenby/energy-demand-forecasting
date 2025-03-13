@@ -36,6 +36,7 @@ def plot_predictions_against_actuals(
     """
 
     _, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+    
     ax1.scatter(
         test_pred,
         test_actual,
@@ -44,6 +45,7 @@ def plot_predictions_against_actuals(
         edgecolor="white",
         label="Test data",
     )
+    
     ax2.scatter(
         train_pred,
         train_actual,
@@ -52,6 +54,7 @@ def plot_predictions_against_actuals(
         edgecolor="white",
         label="Training data",
     )
+    
     ax1.set_ylabel("Actual values")
     for ax in (ax1, ax2):
         ax.set_xlabel("Predicted values")
@@ -79,6 +82,7 @@ def plot_residuals(
     x_max = np.max([np.max(train_pred), np.max(test_pred)])
     x_min = np.min([np.min(train_pred), np.min(test_pred)])
     _, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+    
     ax1.scatter(
         test_pred,
         test_pred - test_actual,
@@ -87,6 +91,7 @@ def plot_residuals(
         edgecolor="white",
         label="Test data",
     )
+    
     ax2.scatter(
         train_pred,
         train_pred - train_actual,
@@ -95,6 +100,7 @@ def plot_residuals(
         edgecolor="white",
         label="Training data",
     )
+    
     ax1.set_ylabel("Residuals")
     for ax in (ax1, ax2):
         ax.set_xlabel("Predicted values")
