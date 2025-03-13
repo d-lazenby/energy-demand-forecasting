@@ -5,7 +5,16 @@ from typing import Tuple, Optional
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.metrics import mean_absolute_error
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler
+
+from feature_engine.datetime import DatetimeFeatures
+from feature_engine.imputation import DropMissingData
+from feature_engine.selection import DropFeatures
+from feature_engine.timeseries.forecasting import (
+    LagFeatures,
+    WindowFeatures,
+)
+from feature_engine.encoding import OrdinalEncoder
 
 
 class FeatureEngineerByBA(BaseEstimator, TransformerMixin):
@@ -129,6 +138,64 @@ class ScaleByBA(BaseEstimator, TransformerMixin):
         X_[demand_cols] = output[demand_cols]
         return X_
 
+def make_pipeline() -> Pipeline:
+    """
+    Helper function to streamline preprocessing pipeline.
+    """
+    dtf = DatetimeFeatures(
+        variables=["datetime"],
+        features_to_extract=[
+            "month",
+            "week",
+            "day_of_week",
+            "day_of_month",
+            "weekend",
+        ],
+        drop_original=False,
+    )
+
+    lag_transformer = FeatureEngineerByBA(
+        LagFeatures(
+            variables=["demand"],
+            periods=[1, 2, 3, 4, 5, 6, 7, 30, 180, 365],
+            drop_original=False,
+        )
+    )
+
+    window_transformer = FeatureEngineerByBA(
+        WindowFeatures(
+            variables=["demand"],
+            window=[3, 7, 14],
+            freq=None,
+            functions=["mean", "std", "max", "min"],
+            missing_values="ignore",
+        )
+    )
+
+    minmax_scaler = ScaleByBA(MinMaxScaler())
+
+    # Introduce missing date when using lags and windows so need to drop these NaNs
+    drop_missing = DropMissingData()
+
+    # Ordinal encoding for BA feature
+    ordinal_enc = OrdinalEncoder(variables=["ba_code"], encoding_method="arbitrary")
+
+    # Also drop the target from the training set
+    drop_target = DropFeatures(features_to_drop=["demand", "datetime"])
+
+    pipe = Pipeline(
+        [
+            ("datetime", dtf),
+            ("lags", lag_transformer),
+            ("windf", window_transformer),
+            ("minmax_scaling", minmax_scaler),
+            ("drop_missing", drop_missing),
+            ("ordinal_enc", ordinal_enc),
+            ("drop_target", drop_target),
+        ]
+    )
+
+    return pipe
 
 def make_baseline_predictions(
     test_data: pd.DataFrame,
