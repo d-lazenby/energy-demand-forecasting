@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
+import joblib
 from typing import Tuple, Optional
+from pathlib import Path
 
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -198,7 +200,15 @@ def make_pipeline() -> Pipeline:
     return pipe
 
 
-def forwardfill_missing_values(data: pd.DataFrame) -> pd.DataFrame:
-    df = data.copy()
-    df = df.replace(-1, np.nan).ffill()
-    return df
+def forwardfill_missing_values(X: pd.DataFrame) -> pd.DataFrame:
+    X_ = X.copy()
+    X_ = X_.replace(-1, np.nan).ffill()
+    return X_
+
+
+def save_model(model: BaseEstimator, filepath: Path) -> None:
+    joblib.dump(model, filepath)
+
+
+def load_model(filepath: Path) -> BaseEstimator:
+    return joblib.load(filepath)
