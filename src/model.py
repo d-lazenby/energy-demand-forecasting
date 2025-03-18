@@ -206,7 +206,10 @@ def forwardfill_missing_values(X: pd.DataFrame) -> pd.DataFrame:
     return X_
 
 
-def save_model(model: BaseEstimator, filepath: Path) -> None:
+def save_model(model: BaseEstimator, filename: str) -> None:
+    from src.paths import MODEL_DIR
+    
+    filepath = MODEL_DIR / filename
     joblib.dump(model, filepath)
 
 
