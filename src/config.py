@@ -18,6 +18,8 @@ FEATURE_GROUP_VERSION = 1
 FEATURE_VIEW_NAME = "daily_demand_feature_view"
 FEATURE_VIEW_VERSION = 1
 
+DAYS_HISTORICAL = 365
+
 # BAs for which we also have map layers: 53 in total.
 BAS = [
     "AZPS",
