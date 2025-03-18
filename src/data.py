@@ -13,6 +13,7 @@ from typing import Tuple
 from sklearn.pipeline import Pipeline
 
 from src.paths import PARENT_DIR, RAW_DATA_DIR, TRANSFORMED_DATA_DIR
+from src.model import forwardfill_missing_values
 
 load_dotenv(PARENT_DIR / ".env")
 EIA_API_KEY = os.environ["EIA_API_KEY"]
@@ -218,8 +219,7 @@ def fetch_batch_raw_data(from_date: datetime, to_date: datetime) -> pd.DataFrame
 
 def prepare_feature_store_data_for_training(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Prepares feature store data for training with SKForecast. Target series are
-    moved to individual columns and the timestamp is set as the index.
+    Prepares feature store data for training.
 
     Args:
         data: dataframe from Hopsworks feature store
@@ -230,25 +230,20 @@ def prepare_feature_store_data_for_training(data: pd.DataFrame) -> pd.DataFrame:
 
     from src.config import BAS
 
+    data_ = data.copy()
+
     # Filter out unwanted BAs
-    data = data[data["ba_code"].isin(BAS)].copy()
+    data_ = data_[data_["ba_code"].isin(BAS)].copy()
 
-    data["datetime"] = pd.to_datetime(data["datetime"]).dt.date
-    data = data.set_index("datetime")
+    # Fix dtypes 
+    data_["datetime"] = pd.to_datetime(data_["datetime"])
+    data_["datetime"] = data_["datetime"].dt.tz_localize(None)
 
-    data = pd.pivot_table(
-        data=data, values="demand", index="datetime", columns="ba_code"
-    )
-    # Resetting column names
-    data.columns.name = None
-    data.columns = [f"ba_{ba_code}" for ba_code in data.columns]
+    data_.sort_values(by=["ba_code", "datetime"], inplace=True)
+    
+    data_ = forwardfill_missing_values(data_)
 
-    # Explicitly set frequency of index
-    data = data.asfreq("1D")
-
-    data = data.sort_index()
-
-    return data
+    return data_
 
 
 def prepare_raw_data_for_training():
