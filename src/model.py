@@ -206,11 +206,14 @@ def forwardfill_missing_values(X: pd.DataFrame) -> pd.DataFrame:
     return X_
 
 
-def save_model(model: BaseEstimator, filename: str) -> None:
+def save_model_files(model: BaseEstimator, filename: str, preprocessing_pipeline: Optional[Pipeline]) -> None:
     from src.paths import MODEL_DIR
     
     filepath = MODEL_DIR / filename
     joblib.dump(model, filepath)
+    
+    if preprocessing_pipeline:
+        joblib.dump(preprocessing_pipeline, MODEL_DIR / 'preprocessing_pipeline.pkl')
 
 
 def load_model(filepath: Path) -> BaseEstimator:
