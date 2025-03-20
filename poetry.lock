@@ -1103,6 +1103,24 @@ files = [
 devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benchmark", "pytest-cache", "validictory"]
 
 [[package]]
+name = "feature-engine"
+version = "1.6.2"
+description = "Feature engineering package with Scikit-learn's fit transform functionality"
+optional = false
+python-versions = ">=3.8.0"
+files = [
+    {file = "feature_engine-1.6.2-py2.py3-none-any.whl", hash = "sha256:1ebf790bb156f565f487f1658f4d2d4f323d013a0ed2665538b3fe0154c4a2b6"},
+    {file = "feature_engine-1.6.2.tar.gz", hash = "sha256:d365941d41f4dca1a83d021b0444df2db2230d843f943f0959aa21082d353e26"},
+]
+
+[package.dependencies]
+numpy = ">=1.18.2"
+pandas = ">=1.0.3"
+scikit-learn = ">=1.0.0"
+scipy = ">=1.4.1"
+statsmodels = ">=0.11.1"
+
+[[package]]
 name = "filelock"
 version = "3.16.1"
 description = "A platform independent file lock."
@@ -5268,4 +5286,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "5aa8a50489dbf59505a671079d11fc1098093744fdf8d64cb787c61efcb782e7"
+content-hash = "7c33fde25f66bb5360443a60d82871c27b190655081276c5eebaf96e1665dfc5"
