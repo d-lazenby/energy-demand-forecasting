@@ -21,6 +21,9 @@ FEATURE_VIEW_VERSION = 1
 MODEL_NAME = "daily_demand_predictor"
 MODEL_VERSION = 3
 
+FEATURE_GROUP_MODEL_PREDICTIONS = "model_predictions_feature_group"
+FEATURE_GROUP_MODEL_PREDICTIONS_VERSION = 1
+
 DAYS_HISTORICAL = 365
 
 # BAs for which we also have map layers: 53 in total.
