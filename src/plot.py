@@ -20,11 +20,11 @@ def plot_demand(demand: pd.DataFrame, bas: Optional[list[str]] = None):
 
 
 def plot_demand_with_prediction(
-    demand: pd.DataFrame, ba: str, prediction: Optional[tuple] = None
+    demand: pd.DataFrame, ba: str, prediction: tuple[pd.Timestamp, float]
     ):
     demand_to_plot = demand[demand["ba_code"] == ba].copy()
-
-    default_colors = px.colors.qualitative.G10_r
+    
+    default_colors = px.colors.qualitative.G10_r 
 
     fig = px.line(
         demand_to_plot,
@@ -37,18 +37,17 @@ def plot_demand_with_prediction(
 
     fig.update_traces(opacity=0.6, line=dict(color=default_colors[0]))
 
-    if prediction:
-        fig.add_scatter(
-            x=[prediction[0]],
-            y=[prediction[1]],
-            mode="markers",
-            marker=dict(
-                size=10,
-                symbol="circle-open",
-                line=dict(width=2),
-            ),
-            name="Prediction",
-        )
+    fig.add_scatter(
+        x=[prediction[0]],
+        y=[prediction[1]],
+        mode="markers",
+        marker=dict(
+            size=10,
+            symbol="circle-open",
+            line=dict(width=2),
+        ), 
+        name="Prediction",
+    )
 
     fig.update_layout(
         title=f"Predicted demand for {ba} on {prediction[0].date()}",
