@@ -52,12 +52,12 @@ def plot_demand_with_prediction(
     fig.update_layout(
         title=f"Predicted demand for {ba} on {prediction[0].date()}",
         xaxis_title=None,
-        yaxis_title="Electricity Demand (MW)",
+        yaxis_title="Electricity Demand (MWh)",
         showlegend=False,
         yaxis=dict(showgrid=False),
     )
 
-    fig.show()
+    return fig
 
 
 def plot_predictions_against_actuals(
