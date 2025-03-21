@@ -5,7 +5,7 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 
 
-def plot_demand(demand: pd.DataFrame, bas: Optional[list[int]] = None):
+def plot_demand(demand: pd.DataFrame, bas: Optional[list[str]] = None):
     demand_to_plot = demand[demand["ba_code"].isin(bas)] if bas else demand
 
     fig = px.line(
@@ -14,6 +14,48 @@ def plot_demand(demand: pd.DataFrame, bas: Optional[list[int]] = None):
         y="demand",
         color="ba_code",
         template="none",
+    )
+
+    fig.show()
+
+
+def plot_demand_with_prediction(
+    demand: pd.DataFrame, ba: str, prediction: Optional[tuple] = None
+    ):
+    demand_to_plot = demand[demand["ba_code"] == ba].copy()
+
+    default_colors = px.colors.qualitative.G10_r
+
+    fig = px.line(
+        demand_to_plot,
+        x="datetime",
+        y="demand",
+        markers=False,
+        color="ba_code",
+        template="plotly_dark",
+    )
+
+    fig.update_traces(opacity=0.6, line=dict(color=default_colors[0]))
+
+    if prediction:
+        fig.add_scatter(
+            x=[prediction[0]],
+            y=[prediction[1]],
+            mode="markers",
+            marker=dict(
+                size=10,
+                symbol="circle-open",
+                line=dict(width=2),
+            ),
+            name="Prediction",
+        )
+
+    fig.update_layout(
+        title=f"Predicted demand for {ba} on {prediction[0].date()}",
+        xaxis_title=None,
+        yaxis_title="Electricity Demand (MW)",
+        showlegend=False,
+        yaxis=dict(showgrid=False),
     )
 
     fig.show()
