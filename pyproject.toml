@@ -29,6 +29,7 @@ lightgbm = "^4.5.0"
 hsfs = {extras = ["python"], version = "^3.7.9"}
 hopsworks = "^4.1.2"
 feature-engine = "<1.8.0"
+streamlit = "^1.43.2"
 
 
 [build-system]
