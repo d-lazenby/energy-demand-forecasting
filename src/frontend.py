@@ -11,8 +11,22 @@ from src.inference import (
 st.set_page_config(layout="wide")
 
 current_date = datetime.now().date()
-st.title("US Daily Electricity Demand Prediction ⚡️")
+st.title("Predicting Daily Electricity Demand in the US ⚡️")
 st.header(f"{current_date}")
+
+with st.sidebar:
+    st.markdown(
+        """
+        - :red[**Data:**] The data is fetched daily from the 
+            [US Energy Information Administration (EIA) API](https://www.eia.gov/opendata/) via a feature 
+            pipeline triggered with a GitHub Action. 
+        - :red[**Charts:**] The plots show a year's worth of data (blue trace) along with the prediction 
+            for tomorrow's demand (red circle) for each Balancing Authority (BA).
+        - :red[**Modelling:**] A simple global LGBMRegressor model was trained over the entire dataset. The demand 
+            scales from $10^3{-}10^7$ MWh across the BAs and the time series 
+            are volatile making it a challenging modelling exercise.
+        """
+    )
 
 st.sidebar.header("Working... 🐝")
 progress_bar = st.sidebar.progress(0)
