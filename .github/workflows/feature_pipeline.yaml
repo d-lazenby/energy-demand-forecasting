@@ -39,7 +39,7 @@ jobs:
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
-    - name: Execute python workflows from bash script
+    - name: Execute feature pipeline workflows from notebook
       working-directory: notebooks
       env:
         HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}

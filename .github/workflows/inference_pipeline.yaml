@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  feature_pipeline:
+  inference_pipeline:
   
     runs-on: ubuntu-latest
 
@@ -39,7 +39,7 @@ jobs:
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
-    - name: Execute python workflows from bash script
+    - name: Execute inference workflow from notebook
       working-directory: notebooks
       env:
         HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
