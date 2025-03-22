@@ -1,0 +1,47 @@
+name: daily-demand-inference-pipeline
+
+on:
+  workflow_run:
+    workflows: ["daily-demand-feature-pipeline"]
+    types:
+      - completed
+
+jobs:
+
+  feature_pipeline:
+  
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    - name: Remove hopsworks and hsfs
+      run: poetry remove hsfs hopsworks
+
+    - name: Re-install hsfs
+      run: poetry add "hsfs[python]"
+
+    - name: Re-install hopsworks
+      run: poetry add hopsworks
+  
+    - name: refresh dependencies
+      run: poetry lock && poetry install
+
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+
+    - name: Execute python workflows from bash script
+      working-directory: notebooks
+      env:
+        HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+        EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      run: poetry run jupyter nbconvert --to notebook --execute 10_inference_pipeline.ipynb
