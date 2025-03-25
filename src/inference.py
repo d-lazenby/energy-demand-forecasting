@@ -5,6 +5,7 @@ import src.config as config
 from pathlib import Path
 from datetime import timedelta
 from typing import Tuple
+from datetime import datetime
 
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
@@ -34,7 +35,7 @@ def get_feature_store() -> FeatureStore:
     return project.get_feature_store()
 
 
-def load_batch_of_features_for_inference(current_date: str) -> pd.DataFrame:
+def load_batch_of_features_for_inference(current_date: datetime.date) -> pd.DataFrame:
 
     # Adding some padding so that we don't lose any data
     to_date = current_date + timedelta(days=2)
@@ -147,3 +148,42 @@ def get_model_predictions(
     predictions_df["datetime"] = features_end + pd.offsets.Day(1)
 
     return predictions_df.round()
+
+
+def load_batch_of_predictions(
+    current_date: datetime.date, 
+    days_in_past: int = 30,
+) -> pd.DataFrame:
+    """
+    Loads a batch of predictions from {days_in_past} days before {current_date} to {current_date}.
+
+    Args:
+        current_date: the date up to which we'd like the predictions
+        days_in_past: the number of days in the past relative to {current_date} we'd like to
+            fetch predictions for
+
+    Returns:
+        A dataframe of predictions of demand for each date and BA
+    """
+    to_date = current_date
+    from_date = current_date - timedelta(days=days_in_past)
+
+    feature_store = get_feature_store()
+
+    feature_group = feature_store.get_feature_group(
+        name=config.FEATURE_GROUP_MODEL_PREDICTIONS,
+        version=config.FEATURE_GROUP_MODEL_PREDICTIONS_VERSION,
+    )
+
+    feature_view = feature_store.get_or_create_feature_view(
+        name=config.FEATURE_VIEW_MODEL_PREDICTIONS_NAME,
+        version=config.FEATURE_VIEW_MODEL_PREDICTIONS_NAME_VERSION,
+        query=feature_group.select_all(),
+    )
+
+    data = feature_view.get_batch_data(
+        start_time=from_date,
+        end_time=to_date,
+    )
+
+    return prepare_feature_store_data_for_training(data)
