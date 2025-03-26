@@ -4,6 +4,8 @@ import numpy as np
 import plotly.express as px
 import matplotlib.pyplot as plt
 
+from sklearn.metrics import mean_absolute_error
+
 
 def plot_demand(demand: pd.DataFrame, bas: Optional[list[str]] = None):
     demand_to_plot = demand[demand["ba_code"].isin(bas)] if bas else demand
@@ -123,7 +125,7 @@ def plot_residuals(
     x_max = np.max([np.max(train_pred), np.max(test_pred)])
     x_min = np.min([np.min(train_pred), np.min(test_pred)])
     _, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
-    
+
     ax1.scatter(
         test_pred,
         test_pred - test_actual,
@@ -132,7 +134,7 @@ def plot_residuals(
         edgecolor="white",
         label="Test data",
     )
-    
+
     ax2.scatter(
         train_pred,
         train_pred - train_actual,
@@ -141,7 +143,7 @@ def plot_residuals(
         edgecolor="white",
         label="Training data",
     )
-    
+
     ax1.set_ylabel("Residuals")
     for ax in (ax1, ax2):
         ax.set_xlabel("Predicted values")
@@ -150,3 +152,32 @@ def plot_residuals(
     plt.suptitle("Residual Plots")
     plt.tight_layout()
     plt.show()
+
+
+def get_mae(monitoring_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates the MAE between the demand and the predicted demand
+    over all BAs.
+    
+    Args:
+        monitoring_df: a dataframe containing the date, ba_code, 
+            demand and predicted demand
+    
+    Returns:
+        A dataframe containing the MAE for each date
+    """
+
+    df = (
+        pd.DataFrame(
+            monitoring_df.sort_values(by="datetime")
+            .groupby("datetime")
+            .apply(lambda x: mean_absolute_error(x["demand"], x["predicted_demand"]))
+        )
+        .reset_index()
+        .rename(columns={0: "mae"})
+    )
+
+    df["datetime"] = pd.to_datetime(df["datetime"])
+    df["datetime"] = df["datetime"].dt.tz_localize(None)
+
+    return df
