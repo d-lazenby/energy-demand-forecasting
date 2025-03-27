@@ -3,7 +3,7 @@ name: daily-demand-feature-pipeline
 on:
   schedule:
    # run daily at midnight (UTC).
-   - cron: '0 0 * * *'
+   - cron: '0 5 * * *'
   workflow_dispatch:
 
 jobs:
