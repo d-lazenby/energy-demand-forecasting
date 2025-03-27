@@ -38,7 +38,7 @@ def get_mae_df(monitoring_df: pd.DataFrame) -> pd.DataFrame:
             demand and predicted demand
 
     Returns:
-        A dataframe containing the MAE for each date and the 7-day MAE moving average
+        A dataframe containing the MAE and the 7-day MAE moving average for each date
     """
 
     df = (
@@ -65,3 +65,27 @@ def get_mae_df(monitoring_df: pd.DataFrame) -> pd.DataFrame:
     mae_df = window_transformer.fit_transform(df)
 
     return DropMissingData().fit_transform(mae_df)
+
+
+def get_mae_by_ba_df(monitoring_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates the MAE between the demand and the predicted demand for each BA.
+
+    Args:
+        monitoring_df: a dataframe containing the date, ba_code,
+            demand and predicted demand
+
+    Returns:
+        A dataframe containing the MAE the 7-day MAE moving average for each (date, BA) pair
+    """
+
+    mae_by_ba_df = pd.DataFrame(
+        columns=["datetime", "mae", "mae_window_7_mean", "ba_code"]
+    )
+
+    for ba_code in monitoring_df["ba_code"].unique():
+        tmp = get_mae_df(monitoring_df.loc[monitoring_df["ba_code"] == ba_code])
+        tmp["ba_code"] = ba_code
+        mae_by_ba_df = pd.concat([mae_by_ba_df, tmp])
+
+    return mae_by_ba_df
