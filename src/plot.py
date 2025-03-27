@@ -2,9 +2,8 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 import matplotlib.pyplot as plt
-
-from sklearn.metrics import mean_absolute_error
 
 
 def plot_demand(demand: pd.DataFrame, bas: Optional[list[str]] = None):
@@ -23,9 +22,9 @@ def plot_demand(demand: pd.DataFrame, bas: Optional[list[str]] = None):
 
 def plot_demand_with_prediction(
     demand: pd.DataFrame, ba: str, prediction: tuple[pd.Timestamp, float]
-    ):
+    ) -> go.Figure:
     demand_to_plot = demand[demand["ba_code"] == ba].copy()
-    
+
     default_colors = px.colors.qualitative.G10_r 
 
     fig = px.line(
@@ -56,6 +55,49 @@ def plot_demand_with_prediction(
         xaxis_title=None,
         yaxis_title="Electricity Demand (MWh)",
         showlegend=False,
+        yaxis=dict(showgrid=False),
+    )
+
+    return fig
+
+
+def plot_mae_df(mae_df: pd.DataFrame) -> go.Figure:
+    """
+    Plots a bar chart of the MAE along with a line plot of the 7-day MAE moving average.
+
+    Args:
+        mae_df: a dataframe containing the date, MAE and 7-day MAE moving average
+
+    Returns:
+        The plot
+    """
+    fig = px.bar(
+        mae_df,
+        x="datetime",
+        y="mae",
+        template="plotly_dark",
+    )
+
+    default_colors = px.colors.qualitative.G10_r
+
+    fig.add_trace(
+        go.Scatter(
+            x=mae_df["datetime"],
+            y=mae_df["mae_window_7_mean"],
+            mode="lines",
+            line=dict(color=default_colors[1], width=2),
+            opacity=0.6,
+            name="7-Day Avg MAE",
+        )
+    )
+
+    fig.update_traces(opacity=0.6, marker=dict(color=default_colors[0]))
+
+    fig.update_layout(
+        title=f"MAE for the last 30 days from {mae_df.iloc[-1]['datetime'].date()}",
+        xaxis_title=None,
+        yaxis_title="MAE (MWh)",
+        showlegend=True,
         yaxis=dict(showgrid=False),
     )
 
@@ -152,32 +194,3 @@ def plot_residuals(
     plt.suptitle("Residual Plots")
     plt.tight_layout()
     plt.show()
-
-
-def get_mae(monitoring_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Calculates the MAE between the demand and the predicted demand
-    over all BAs.
-    
-    Args:
-        monitoring_df: a dataframe containing the date, ba_code, 
-            demand and predicted demand
-    
-    Returns:
-        A dataframe containing the MAE for each date
-    """
-
-    df = (
-        pd.DataFrame(
-            monitoring_df.sort_values(by="datetime")
-            .groupby("datetime")
-            .apply(lambda x: mean_absolute_error(x["demand"], x["predicted_demand"]))
-        )
-        .reset_index()
-        .rename(columns={0: "mae"})
-    )
-
-    df["datetime"] = pd.to_datetime(df["datetime"])
-    df["datetime"] = df["datetime"].dt.tz_localize(None)
-
-    return df
