@@ -2,13 +2,14 @@ import pandas as pd
 from datetime import datetime
 from sklearn.metrics import mean_absolute_error
 from feature_engine.timeseries.forecasting import WindowFeatures
+from feature_engine.imputation import DropMissingData
 
 from src.inference import load_batch_of_features, load_batch_of_predictions
 
 
 def load_predictions_and_actual_values_from_feature_store(
     current_date: datetime.date, days_in_past: int = 30
-):
+    ) -> pd.DataFrame:
     """
     Loads predictions and actuals for last {days_in_past} days before {current_date} and combines 
     them into a single dataframe.
@@ -63,4 +64,4 @@ def get_mae_df(monitoring_df: pd.DataFrame) -> pd.DataFrame:
 
     mae_df = window_transformer.fit_transform(df)
 
-    return mae_df
+    return DropMissingData().fit_transform(mae_df)
