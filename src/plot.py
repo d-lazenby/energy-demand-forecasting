@@ -61,16 +61,25 @@ def plot_demand_with_prediction(
     return fig
 
 
-def plot_mae_df(mae_df: pd.DataFrame) -> go.Figure:
+def plot_mae_df(mae_df: pd.DataFrame, all_bas: bool = True) -> go.Figure:
     """
-    Plots a bar chart of the MAE along with a line plot of the 7-day MAE moving average.
+    Plots a bar chart of the MAE along with a line plot of the 7-day MAE moving average. If {mae_df}
+    has been derived per BA, then it should accept a slice for a particular BA and {all_bas} can be
+    set to False to plot the MAE for that BA.
 
     Args:
         mae_df: a dataframe containing the date, MAE and 7-day MAE moving average
 
     Returns:
-        The plot
+        The combined bar and line plot
     """
+    if not all_bas:
+        ba_code = mae_df["ba_code"].unique()[0]
+        mae_df = mae_df[[col for col in mae_df.columns if col != "ba_code"]]
+        title = f"MAE for the last 30 days from {mae_df.iloc[-1]['datetime'].date()} for {ba_code}"
+    else:
+        title = f"MAE for the last 30 days from {mae_df.iloc[-1]['datetime'].date()}"
+
     fig = px.bar(
         mae_df,
         x="datetime",
@@ -94,7 +103,7 @@ def plot_mae_df(mae_df: pd.DataFrame) -> go.Figure:
     fig.update_traces(opacity=0.6, marker=dict(color=default_colors[0]))
 
     fig.update_layout(
-        title=f"MAE for the last 30 days from {mae_df.iloc[-1]['datetime'].date()}",
+        title=f"{title}",
         xaxis_title=None,
         yaxis_title="MAE (MWh)",
         showlegend=True,
