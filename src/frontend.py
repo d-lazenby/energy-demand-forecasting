@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from src.plot import plot_demand_with_prediction
 from src.inference import (
@@ -38,7 +38,9 @@ with st.spinner(text="Fetching historical data..."):
     progress_bar.progress(1 / n_steps)
 
 with st.spinner(text="Fetching predictions from the feature store..."):
-    predictions = load_batch_of_predictions(current_date=current_date, days_in_past=2)
+    predictions = load_batch_of_predictions(
+        current_date=current_date + timedelta(days=1), days_in_past=2
+    )
     st.sidebar.write("✅ Predictions made")
     progress_bar.progress(2 / n_steps)
 
