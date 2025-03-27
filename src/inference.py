@@ -19,6 +19,8 @@ from src.data import prepare_feature_store_data_for_training
 """
 TODO: 
     - Clean up config for hopsworks by adding in new script holding Hopsworks metadata
+    - Combine load_predictions/load_features functions into a single function and modify the 
+        metadata with a flag
 """
 
 def get_hopsworks_project() -> Project:
@@ -178,6 +180,45 @@ def load_batch_of_predictions(
     feature_view = feature_store.get_or_create_feature_view(
         name=config.FEATURE_VIEW_MODEL_PREDICTIONS_NAME,
         version=config.FEATURE_VIEW_MODEL_PREDICTIONS_NAME_VERSION,
+        query=feature_group.select_all(),
+    )
+
+    data = feature_view.get_batch_data(
+        start_time=from_date,
+        end_time=to_date,
+    )
+
+    return prepare_feature_store_data_for_training(data)
+
+
+def load_batch_of_features(
+    current_date: datetime.date,
+    days_in_past: int = 30,
+    ) -> pd.DataFrame:
+    """
+    Loads a batch of features from {days_in_past} days before {current_date} to {current_date}.
+
+    Args:
+        current_date: the date up to which we'd like the features
+        days_in_past: the number of days in the past relative to {current_date} we'd like to
+            fetch features for
+
+    Returns:
+        A dataframe of demand for each date and BA
+    """
+    to_date = current_date
+    from_date = current_date - timedelta(days=days_in_past)
+
+    feature_store = get_feature_store()
+
+    feature_group = feature_store.get_feature_group(
+        name=config.FEATURE_GROUP_NAME,
+        version=config.FEATURE_GROUP_VERSION,
+    )
+
+    feature_view = feature_store.get_or_create_feature_view(
+        name=config.FEATURE_VIEW_NAME,
+        version=config.FEATURE_VIEW_VERSION,
         query=feature_group.select_all(),
     )
 
