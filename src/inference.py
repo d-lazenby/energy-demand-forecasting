@@ -1,10 +1,5 @@
 import pandas as pd
 import hopsworks
-import hsfs
-
-print("hsfs version:", hsfs.__version__)
-print("hsfs attributes:", dir(hsfs))
-
 import src.config as config
 
 from pathlib import Path
@@ -20,7 +15,6 @@ from hopsworks.project import Project
 
 from src.paths import PARENT_DIR
 from src.data import prepare_feature_store_data_for_training
-
 
 """
 TODO: 
