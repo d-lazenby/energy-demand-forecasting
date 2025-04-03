@@ -14,7 +14,7 @@ This project demonstrates end-to-end ML engineering practices for time-series fo
 - Streamlit applications for visualizing predictions and monitoring model performance
 
 ## Architecture
-Below is an overview of the system architecture. It follows the [FTI (feature-training-inference)](https://www.hopsworks.ai/post/mlops-to-ml-systems-with-fti-pipelines) design in which the component pipelines are uncoupled from one another and can be operated and developed independently.
+Below is an overview of the system architecture. It follows the [FTI (feature-training-inference)](https://www.hopsworks.ai/post/mlops-to-ml-systems-with-fti-pipelines) design in which the component pipelines are uncoupled and can be operated and developed independently.
 
 ![](architecture.drawio.svg)
 
@@ -22,7 +22,7 @@ The system consists of several components:
 
 1. **Feature Pipeline**: US electricity demand data is fetched daily from the EIA API and uploaded to the feature store. This process is triggered via a GitHub Actions workflow.
 2. **Training Pipeline**: Features and labels are fetched from the feature store and passed to the training pipeline. This notebook preprocesses them and trains a simple LightGBM regressor and the trained model and fitted preprocessing pipeline is uploaded to a model registry.
-3. **Inference Pipeline**: On completion of the feature pipeline, another GitHub Actions workflow is triggered that fetches features and the model from Hopsworks, makes a batch of predictions and writes these back to the feature store. 
+3. **Inference Pipeline**: Completion of the feature pipeline triggers a second GitHub Actions workflow that fetches features and the model from Hopsworks, makes a batch of predictions and writes these back to the feature store. 
 4. **Visualization**: The stored features, labels and predictions are used by a Streamlit frontend for displaying forecasts alongside historical data and the next day's prediction.
 5. **Monitoring**: A second Streamlit app takes the labels and predictions from the feature store and calculates and plots metrics for monitoring purposes.
 
@@ -64,70 +64,6 @@ The project was written in Python 3.11.10 and uses `poetry` for dependency manag
 
 - A Hopsworks account for feature store and model registry
 - An API key for EIA data access
-- A `.env` file containing
-    ```bash
-    EIA_API_KEY=YOUR_EIA_API_KEY
-    HOPSWORKS_PROJECT_NAME="YOUR_HOPSWORKS_PROJECT_NAME"
-    HOPSWORKS_API_KEY="YOUR_HOPSWORKS_API_KEY"
-    ```
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/d-lazenby/energy-demand-forecasting.git
-   cd energy-demand-forecasting
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Set up environment variables:
-   ```bash
-   export EIA_API_KEY="your_eia_api_key"
-   export HOPSWORKS_API_KEY="your_hopsworks_api_key"
-   ```
-
-### Running the Feature Pipeline
-
-The feature pipeline is automatically executed daily via GitHub Actions. To run it manually:
-
-```bash
-python src/features/feature_pipeline.py
-```
-
-### Training the Model
-
-```bash
-python src/models/train.py
-```
-
-### Running the Streamlit App
-
-```bash
-streamlit run src/visualization/app.py
-```
-
-## Streamlit App
-
-The Streamlit application provides:
-
-- Interactive selection of different balancing authorities
-- Visualization of historical electricity demand
-- Display of forecasted demand for upcoming days
-- Comparison between predicted and actual values
-
-## Model Performance
-
-The current implementation uses a LightGBM regressor with basic feature engineering. Key metrics:
-
-- RMSE: [Add actual value]
-- MAE: [Add actual value]
-- R²: [Add actual value]
-
-Note: This project emphasizes ML engineering practices rather than achieving state-of-the-art predictive performance.
 
 ## Future Improvements
 
