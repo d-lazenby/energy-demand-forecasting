@@ -1,17 +1,17 @@
 import streamlit as st
 from datetime import datetime, timedelta
 
-from src.plot import plot_demand_with_prediction
-from src.inference import (
-    load_batch_of_features_for_inference,
-    load_batch_of_predictions,
-)
-
 import sys
 import os
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from src.plot import plot_demand_with_prediction
+from src.inference import (
+    load_batch_of_features_for_inference,
+    load_batch_of_predictions,
+)
 
 st.set_page_config(layout="wide")
 
