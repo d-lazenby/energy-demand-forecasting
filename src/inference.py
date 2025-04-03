@@ -16,6 +16,11 @@ from hopsworks.project import Project
 from src.paths import PARENT_DIR
 from src.data import prepare_feature_store_data_for_training
 
+import hsfs
+
+print("hsfs version:", hsfs.__version__)
+print("hsfs attributes:", dir(hsfs))
+
 """
 TODO: 
     - Clean up config for hopsworks by adding in new script holding Hopsworks metadata
