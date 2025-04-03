@@ -1,5 +1,4 @@
 import pandas as pd
-import hopsworks
 import src.config as config
 
 from pathlib import Path
@@ -24,6 +23,7 @@ TODO:
 """
 
 def get_hopsworks_project() -> Project:
+    import hopsworks
 
     return hopsworks.login(
         project=config.HOPSWORKS_PROJECT_NAME,
