@@ -2,6 +2,8 @@
 
 A machine learning engineering project that predicts daily electricity demand for different balancing authorities (BAs) across the United States. This project emphasizes ML engineering best practices including modular design, feature store and model registry integration, and automated pipelines.
 
+Links to the frontend and monitoring dashboards are [here](https://frontendpy-us-energy-demand-forecasting.streamlit.app/) and here.
+
 ## Project Overview
 
 This project demonstrates end-to-end ML engineering practices for time-series forecasting, featuring:
@@ -60,74 +62,7 @@ The system consists of several components:
 ## Getting Started
 
 ### Prerequisites
-The project was written in Python 3.11.10 and uses `poetry` for dependency management. You will also need:
-
-- A Hopsworks account for feature store and model registry
-- An API key for EIA data access
-- A `.env` file containing
-    ```bash
-    EIA_API_KEY=YOUR_EIA_API_KEY
-    HOPSWORKS_PROJECT_NAME="YOUR_HOPSWORKS_PROJECT_NAME"
-    HOPSWORKS_API_KEY="YOUR_HOPSWORKS_API_KEY"
-    ```
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/d-lazenby/energy-demand-forecasting.git
-   cd energy-demand-forecasting
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Set up environment variables:
-   ```bash
-   export EIA_API_KEY="your_eia_api_key"
-   export HOPSWORKS_API_KEY="your_hopsworks_api_key"
-   ```
-
-### Running the Feature Pipeline
-
-The feature pipeline is automatically executed daily via GitHub Actions. To run it manually:
-
-```bash
-python src/features/feature_pipeline.py
-```
-
-### Training the Model
-
-```bash
-python src/models/train.py
-```
-
-### Running the Streamlit App
-
-```bash
-streamlit run src/visualization/app.py
-```
-
-## Streamlit App
-
-The Streamlit application provides:
-
-- Interactive selection of different balancing authorities
-- Visualization of historical electricity demand
-- Display of forecasted demand for upcoming days
-- Comparison between predicted and actual values
-
-## Model Performance
-
-The current implementation uses a LightGBM regressor with basic feature engineering. Key metrics:
-
-- RMSE: [Add actual value]
-- MAE: [Add actual value]
-- R²: [Add actual value]
-
-Note: This project emphasizes ML engineering practices rather than achieving state-of-the-art predictive performance.
+The project was written in Python 3.11.10 and uses `poetry` for dependency management. See `.env.sample` for how to set up environment credentials for the EIA and Hopsworks services.
 
 ## Future Improvements
 
@@ -136,11 +71,3 @@ Note: This project emphasizes ML engineering practices rather than achieving sta
 - Setting up triggered retraining when performance degrades
 - Adding more advanced features from external data sources
 - Enhancing the visualization dashboard with additional metrics
-
-## License
-
-[Add your license information here]
-
-## Contact
-
-[Your contact information]
