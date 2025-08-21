@@ -3,7 +3,7 @@ import src.config as config
 
 from pathlib import Path
 from datetime import timedelta
-from typing import Tuple
+from typing import Tuple, Optional
 from datetime import datetime
 
 from sklearn.base import BaseEstimator
@@ -16,7 +16,9 @@ from src.paths import PARENT_DIR
 from src.data import prepare_feature_store_data_for_training
 
 """
-TODO: 
+TODO:
+    - Modify getting/loading predictions process to account for the fact that they may not be available 
+        for today's date.
     - Clean up config for hopsworks by adding in new script holding Hopsworks metadata
     - Combine load_predictions/load_features functions into a single function and modify the 
         metadata with a flag
@@ -37,11 +39,13 @@ def get_feature_store() -> FeatureStore:
     return project.get_feature_store()
 
 
-def load_batch_of_features_for_inference(current_date: datetime.date) -> pd.DataFrame:
+def load_batch_of_features_for_inference(
+    current_date: datetime.date,
+    backfill_days: int = 0) -> pd.DataFrame:
 
     # Adding some padding so that we don't lose any data
     to_date = current_date + timedelta(days=2)
-    from_date = current_date - timedelta(days=config.DAYS_HISTORICAL + 14)
+    from_date = current_date - timedelta(days=config.DAYS_HISTORICAL + 14 + backfill_days)
 
     feature_store = get_feature_store()
 
@@ -107,6 +111,7 @@ def get_model_predictions(
     preprocessing_pipeline: Pipeline,
     X: pd.DataFrame,
     features_end: str,
+    backfill_days: int = 0
 ) -> pd.DataFrame:
     """
     Uses {model} to make predictions of daily demand for the day after {features_end}
@@ -118,6 +123,7 @@ def get_model_predictions(
         X: the features for inference
         features_end: the date corresponding to the day before the prediction date,
             in format, e.g., '2025-03-15'
+        back_fill_days (optional): the number of days of predictions to backfill
 
     Returns:
         A dataframe holding the predictions.
@@ -128,27 +134,55 @@ def get_model_predictions(
             datetime: datetime64
     """
     features_end = pd.Timestamp(features_end)
-    features_start = features_end - pd.offsets.Day(config.DAYS_HISTORICAL)
+    features_start = features_end - pd.offsets.Day(config.DAYS_HISTORICAL + backfill_days)
 
     # Filter to appropriate date range
     inference_data = X.loc[
         (X["datetime"] <= features_end) & (X["datetime"] >= features_start)
     ].copy()
 
-    # Transform data with fitted pipeline
-    inference_data_t = preprocessing_pipeline.transform(inference_data)
+    if backfill_days == 0:
+        # Transform data with fitted pipeline
+        inference_data_t = preprocessing_pipeline.transform(inference_data)
 
-    predictions = model.predict(inference_data_t)
+        predictions = model.predict(inference_data_t)
 
-    ba_codes = inference_data["ba_code"].unique()
+        ba_codes = inference_data["ba_code"].unique()
 
-    predictions_df = pd.DataFrame(
-        {"ba_code": ba_codes, "predicted_demand": predictions}
+        predictions_df = pd.DataFrame(
+            {"ba_code": ba_codes, "predicted_demand": predictions}
+        )
+
+        # Predictions are for the day after {features_end}
+        predictions_df["datetime"] = features_end + pd.offsets.Day(1)
+
+        return predictions_df.round()
+
+    dates = pd.date_range(
+        start=features_end - pd.offsets.Day(backfill_days), end=features_end
     )
 
-    # Predictions are for the day after {features_end}
-    predictions_df["datetime"] = features_end + pd.offsets.Day(1)
+    ba_codes = inference_data["ba_code"].unique()
+    predictions_df = pd.DataFrame()
 
+    for ba_code in ba_codes:
+
+        inf_data = inference_data.loc[
+            inference_data["ba_code"] == ba_code, ["ba_code", "datetime", "demand"]
+        ]
+        
+        inf_data_t = preprocessing_pipeline.transform(inf_data)
+        
+        predictions = model.predict(inf_data_t)
+
+        tmp = pd.DataFrame()
+
+        tmp["predicted_demand"] = predictions
+        tmp["datetime"] = dates + pd.offsets.Day(1)
+        tmp.insert(0, "ba_code", ba_code)
+
+        predictions_df = pd.concat([predictions_df, tmp])
+        
     return predictions_df.round()
 
 
