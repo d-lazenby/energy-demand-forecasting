@@ -1,6 +1,13 @@
 import streamlit as st
 from datetime import datetime
 
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
 from src.monitoring import (
     load_predictions_and_actual_values_from_feature_store, 
     get_mae_df,
