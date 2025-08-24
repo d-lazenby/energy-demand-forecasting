@@ -1,9 +1,12 @@
-affine==2.4.0
-aiomysql==0.2.0
-alembic==1.14.0
-altair==4.2.2
-annotated-types==0.7.0
-anyio==4.6.2.post1
+./wheels/hsfs-3.7.9-py3-none-any.whl
+./wheels/hopsworks-4.1.2-py3-none-any.whl
+
+affine==2.4.0 ; python_version >= "3.11" and python_version < "3.12"
+aiomysql==0.2.0 ; python_version >= "3.11" and python_version < "3.12"
+alembic==1.14.0 ; python_version >= "3.11" and python_version < "3.12"
+altair==4.2.2 ; python_version >= "3.11" and python_version < "3.12"
+annotated-types==0.7.0 ; python_version >= "3.11" and python_version < "3.12"
+anyio==4.6.2.post1 ; python_version >= "3.11" and python_version < "3.12"
 appnope==0.1.4 ; python_version >= "3.11" and python_version < "3.12" and platform_system == "Darwin"
 argon2-cffi-bindings==21.2.0 ; python_version >= "3.11" and python_version < "3.12"
 argon2-cffi==23.1.0 ; python_version >= "3.11" and python_version < "3.12"
@@ -63,8 +66,6 @@ grpcio==1.68.0 ; python_version >= "3.11" and python_version < "3.12"
 h11==0.14.0 ; python_version >= "3.11" and python_version < "3.12"
 holidays==0.60 ; python_version >= "3.11" and python_version < "3.12"
 hopsworks-aiomysql[sa]==0.2.1 ; python_version >= "3.11" and python_version < "3.12"
-hopsworks==4.1.2
-hsfs[python]==3.7.9
 httpcore==1.0.7 ; python_version >= "3.11" and python_version < "3.12"
 httpx==0.28.0 ; python_version >= "3.11" and python_version < "3.12"
 identify==2.6.3 ; python_version >= "3.11" and python_version < "3.12"
